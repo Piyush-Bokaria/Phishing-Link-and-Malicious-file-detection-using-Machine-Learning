@@ -1445,38 +1445,52 @@
       s(),
       r();
   });
+
   document.getElementById('malicious-form').addEventListener('submit', function (e) {
     e.preventDefault();
-    const formData = new FormData();
-    const fileInput = document.getElementById('malicious-file');
-    formData.append('file', fileInput.files[0]);
-
+  
+    const features = [0, 0, 123, 2, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0]; // dummy features for now
+  
     fetch('/predict_malware', {
-        method: 'POST',
-        body: formData
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ features: features })
     })
-    .then(res => res.text())
-    .then(result => {
-        alert(result);
-        document.getElementById('result-box').innerText = result;
+    .then(res => res.json())
+    .then(data => {
+      alert('Malware Prediction: ' + data.prediction);
+      document.getElementById('result-box').innerText = 'Malware Prediction: ' + data.prediction;
+    })
+    .catch(err => {
+      alert('Error: ' + err);
     });
-});
-
-document.getElementById('phishing-form').addEventListener('submit', function (e) {
+  });
+  
+  document.getElementById('phishing-form').addEventListener('submit', function (e) {
     e.preventDefault();
     const url = document.getElementById('phishing-link').value;
-
+  
     fetch('/predict_url', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `url=${encodeURIComponent(url)}`
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: `url=${encodeURIComponent(url)}`
     })
-    .then(res => res.text())
-    .then(result => {
-        alert(result);
-        // OR optionally display:
-        document.getElementById('result-box').innerText = result;
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        alert('Error: ' + data.error);
+        document.getElementById('result-box').innerText = 'Error: ' + data.error;
+      } else {
+        alert('URL Prediction: ' + data.prediction);
+        document.getElementById('result-box').innerText = 'URL Prediction: ' + data.prediction;
+      }
+    })
+    .catch(err => {
+      alert('Error: ' + err);
     });
-});
+  });
+  

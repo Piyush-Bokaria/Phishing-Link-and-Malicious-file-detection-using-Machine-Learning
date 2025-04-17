@@ -2,10 +2,27 @@ import os
 import pickle
 import joblib
 import numpy as np
-from flask import Flask, request, render_template, redirect, flash
+from flask import Flask, request, render_template, redirect, flash ,jsonify
 import urllib.parse
 import re
 from werkzeug.utils import secure_filename
+import pefile
+
+def extract_pe_features(file_path):
+    try:
+        pe = pefile.PE(file_path)
+
+        features = []
+        features.append(pe.FILE_HEADER.Characteristics)
+        features.append(pe.OPTIONAL_HEADER.SizeOfStackReserve)
+        features.append(min([s.get_entropy() for s in pe.sections]))
+        features.append(pe.OPTIONAL_HEADER.DllCharacteristics)
+        features.append(pe.OPTIONAL_HEADER.SizeOfHeaders)
+
+        return np.array(features).reshape(1, -1)
+    except Exception as e:
+        print("Error in PE feature extraction:", e)
+        return None
 
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -75,21 +92,43 @@ def home():
     return render_template('index.html')
 
 @app.route('/predict_malware', methods=['GET', 'POST'])
-def predict_malware(ar):
-    prediction=malware_model.predict(ar)
-    return int(prediction)
+def predict_file():
+    if 'malicious' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    file = request.files['malicious']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
+
+    features = extract_pe_features(filepath)
+    if features is None:
+        return jsonify({'error': 'Unable to extract features from file'}), 500
+
+    prediction = malware_model.predict(features)[0]
+    print(prediction)
+    label = 'Malicious File' if prediction == 0 else 'Benign File'
+
+    return jsonify({'prediction': label})
 
 @app.route('/predict_url', methods=['GET', 'POST'])
 def predict_url():
     url = request.form.get("url")
     if not url:
-        return "No URL provided"
+        return jsonify({"error": "No URL provided"}), 400
 
     features = extract_url_features(url)
     prediction = phishing_model.predict(features)[0]
-    label = 'Phishing Link' if prediction == 1 else 'Legitimate'
+    print(prediction)
+    label = 'Phishing Link' if prediction == 0 else 'Legitimate'
 
-    return f"The submitted URL is: {label}"
+    return jsonify({
+        "url": url,
+        "prediction": label
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)
