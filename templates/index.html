@@ -195,8 +195,6 @@
                     <form id="malicious-form">
                       <h2><br>Malicious <br>File Detection</h2>
                   
-                      <!-- For now: simulate features -->
-                      <!-- Later: add actual file feature extraction -->
                       <input type="file" name="malicious" id="malicious-file" />
                   
                       <input type="submit" id="malicious-submit" style="color: black;" value="Check File" />
@@ -205,11 +203,10 @@
                         src="{{ url_for('static', filename='img/about-visual.png') }}" 
                         alt="About Us"
                       />
+                      <div id="result-box"></div>
                     </form>
                   </div>
                   
-                  <!-- Result Display -->
-                  <div id="result-box"></div>
                   <div class="about--options">
                     <a href="#0">
                       <h3>Statstics</h3>

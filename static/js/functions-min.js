@@ -1446,27 +1446,44 @@
       r();
   });
 
-  document.getElementById('malicious-form').addEventListener('submit', function (e) {
-    e.preventDefault();
-  
-    const features = [0, 0, 123, 2, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0]; // dummy features for now
-  
-    fetch('/predict_malware', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ features: features })
-    })
-    .then(res => res.json())
-    .then(data => {
-      alert('Malware Prediction: ' + data.prediction);
-      document.getElementById('result-box').innerText = 'Malware Prediction: ' + data.prediction;
-    })
-    .catch(err => {
-      alert('Error: ' + err);
-    });
-  });
+  document.addEventListener('about--banner', function () {
+    const form = document.getElementById('malware-form');
+    if (form) {
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('file');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            const resultDiv = document.getElementById('result-box');
+            resultDiv.innerText = 'Predicting...';
+
+            try {
+                const response = await fetch('/predict_malware', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.prediction) {
+                    resultDiv.innerText = `Malware Prediction: ${data.prediction}`;
+                    alert(`Malware Prediction: ${data.prediction}`);
+                } else if (data.error) {
+                    alert(`Error: ${data.error}`);
+                    resultDiv.innerText = `Error: ${data.error}`;
+                } else {
+                  alert('Unexpected response from server.');
+                    resultDiv.innerText = 'Unexpected response from server.';
+                }
+            } catch (err) {
+              alert('Error predicting file: ' + err.message)
+                resultDiv.innerText = 'Error predicting file: ' + err.message;
+            }
+        });
+    }
+});
   
   document.getElementById('phishing-form').addEventListener('submit', function (e) {
     e.preventDefault();
