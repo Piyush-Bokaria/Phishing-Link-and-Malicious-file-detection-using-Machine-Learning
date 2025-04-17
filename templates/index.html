@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Phishing & Malicious File Detection</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="keywords" content="global, template, html, sass, jquery" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/logo.ico') }}" type="image/x-icon" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
+  </head>
+  <body>
+    <div class="device-notification">
+      <p class="device-notification--message">
+        Please change the orientation of your device to potrait or find a larger
+        screen.
+      </p>
+    </div>
+
+    <div class="perspective effect-rotate-left">
+      <div class="container">
+        <div id="viewport" class="l-viewport">
+          <div class="l-wrapper">
+            <header class="header">
+              <a class="header--logo" href="#0">
+                <img class="logo-image" src="{{ url_for('static', filename='img/logo.png') }}" alt="" />
+                <p>Phishing & Malicious File Detection</p>
+              </a>
+              <button class="header--cta cta"></button>
+              <div class="header--nav-toggle">
+                <span></span>
+              </div>
+            </header>
+            <nav class="l-side-nav">
+              <ul class="side-nav">
+                <li class="is-active"><span>Home</span></li>
+                <li><span>Phishing Link Detection</span></li>
+                <li><span>Malicious File Detection</span></li>
+                <li><span>Contact</span></li>
+                <li><span>About Us</span></li>
+              </ul>
+            </nav>
+            <ul class="l-main-content main-content">
+              <li class="l-section section section--is-active">
+                <div class="intro">
+                  <div class="intro--banner">
+                    <h1>
+                      Phishing &amp;<br> Malicous File <br>Detection using ML
+                    </h1>
+                    <button class="cta">
+                      About Us
+                      <svg
+                        version="1.1"
+                        id="Layer_1"
+                        xmlns="http://www.w3.org/2000/svg"
+                        xmlns:xlink="http://www.w3.org/1999/xlink"
+                        x="0px"
+                        y="0px"
+                        viewBox="0 0 150 118"
+                        style="enable-background: new 0 0 150 118"
+                        xml:space="preserve"
+                      >
+                        <g
+                          transform="translate(0.000000,118.000000) scale(0.100000,-0.100000)"
+                        >
+                          <path
+                            d="M870,1167c-34-17-55-57-46-90c3-15,81-100,194-211l187-185l-565-1c-431,0-571-3-590-13c-55-28-64-94-18-137c21-20,33-20,597-20h575l-192-193C800,103,794,94,849,39c20-20,39-29,61-29c28,0,63,30,298,262c147,144,272,271,279,282c30,51,23,60-219,304C947,1180,926,1196,870,1167z"
+                          />
+                        </g>
+                      </svg>
+                      <span class="btn-background"></span>
+                    </button>
+                    <img
+                      class="home-image"
+                      src="{{ url_for('static', filename='images/home-page-image.png') }}"
+                      alt="Welcome"
+                    />
+                  </div>
+                  <div class="intro--options">
+                    <a href="#0">
+                      <h3>Phishing Attacks</h3>
+                      <p>
+                        Phishing email statistics suggest that nearly 1.2% (3.4 Billion) of all daily emails sent are malicious. 
+                      </p>
+                    </a>
+                    <a href="#0">
+                      <h3>Cyber Crimes in India</h3>
+                      <p>
+                        In 2024, the cost of data breaches surged over two million U.S. dollars in the country.
+                      </p>
+                    </a>
+                    <a href="#0">
+                      <h3>Malicious File Sharing</h3>
+                      <p>
+                        Cybercriminals shared an average of 411,000 malicious files every day in 2023.
+                      </p>
+                    </a>
+                  </div>
+                </div>
+              </li>
+              <li class="l-section section">
+                <div class="work">
+                  <div class="work--lockup">
+                    <div class="slider--prev">
+                      <svg
+                        version="1.1"
+                        id="Layer_1"
+                        xmlns="http://www.w3.org/2000/svg"
+                        xmlns:xlink="http://www.w3.org/1999/xlink"
+                        x="0px"
+                        y="0px"
+                        viewBox="0 0 150 118"
+                        style="enable-background: new 0 0 150 118"
+                        xml:space="preserve"
+                      >
+                      <g transform="translate(75, 75) translate(-75, -75)">
+                        <path
+                            d="M75,10 L10,75 L30,75 L30,140 L120,140 L120,75 L140,75 Z"
+                            fill="white"
+                        />
+                    </g>
+                      </svg>
+                    </div>
+                    <ul class="slider">
+                      <li class="slider--item slider--item-left">
+                        <a href="#0">
+                          <div class="slider--item-image">
+                            <img
+                              alt="Victory"
+                              src="{{ url_for('static', filename='images/image.png') }}"
+                            />
+                          </div>
+                          <p class="slider--item-title">Phishing</p>
+                        </a>
+                      </li>
+                      <li class="slider--item slider--item-center">
+                        <a href="#0">
+                          <div class="slider--item-image">
+                            <img
+                              src="{{ url_for('static', filename='img/stats-phishing.png') }}"
+                            />
+                          </div>
+                          <p class="slider--item-title">Statistics of Attacks</p>
+                        </a>
+                      </li>
+                      <li class="slider--item slider--item-right" >
+                        <a href="#0">
+                          <div class="slider--item-image" style="position: relative;">
+                            <img
+                              src="{{ url_for('static', filename='img/phishing prone.png') }}"
+                            />
+                          </div>
+                          <p class="slider--item-title">Prone to Phishing</p>
+                        </a>
+                      </li>
+                    </ul>
+                    <div class="slider--next">
+                      <svg
+                        version="1.1"
+                        id="Layer_1"
+                        xmlns="http://www.w3.org/2000/svg"
+                        xmlns:xlink="http://www.w3.org/1999/xlink"
+                        x="0px"
+                        y="0px"
+                        viewBox="0 0 150 118"
+                        style="enable-background: new 0 0 150 118"
+                        xml:space="preserve"
+                      >
+                      <g transform="translate(75, 75) rotate(-180) translate(-75, -50)">
+                        <path
+                            d="M75,10 L10,75 L30,75 L30,140 L120,140 L120,75 L140,75 Z"
+                            fill="white"
+                        />
+                    </g>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="phishing-link">
+                  <form action="/predict_file" method="post" enctype="multipart/form-data">
+                    <div class="work-request--information ">
+                      <div class="information-name input-link">
+                        <input id="phishing-link" type="text" spellcheck="false" />
+                        <label for="phishing-link">Enter the link</label>
+                      </div>
+                    </div>
+                    <input type="submit" id="phishing-submit" value="Verify the Link" style="color: black;"/>
+                  </form>
+                </div>
+              </li>
+              <li class="l-section section">
+                <div class="about">
+                  <div class="about--banner">
+                    <form action="/predict_url" method="post">
+                    <h2><br>Malicious <br>File Detection</h2>
+
+                    <input type="file" name="malicious" id="malicious-file">
+                    <a href="#0"
+                      >
+                      <input type="submit" id="malicious-submit" value="">
+                    </a>
+                  </form>
+                    <img 
+                      src="{{ url_for('static', filename='img/about-visual.png') }}" 
+                      src="../"
+                      alt="About Us" 
+                    />
+                  </div>
+                  <div class="about--options">
+                    <a href="#0">
+                      <h3>Statstics</h3>
+                    </a>
+                    <a href="#0">
+                      <h3>Malicious File</h3>
+                    </a>
+                    <a href="#0">
+                      <h3>Statistics</h3>
+                    </a>
+                  </div>
+                </div>
+              </li>
+              <li class="l-section section">
+                <div class="contact">
+                  <div class="contact--lockup">
+                    <div class="modal">
+                      <div class="modal--information">
+                        <p>MVGR College Of Engineering(A)</p>
+                        <a href="22331A4465@mvgrce.edu.in"
+                          >22331A4465@mvgrce.edu.in</a
+                        >
+                        <a href="tel:+91 7976653044">+91 79766 53044</a>
+                      </div>
+                      <ul class="modal--options">
+                        <li><a href="22331A4406@mvgrce.edu.in">22331A4406 <br>@mvgrce.edu.in</a></li>
+                        <li><a href="22331A4444@mvgrce.edu.in">22331A4444 <br>@mvgrce.edu.in</a></li>
+                        <li>
+                          <a href="22331A4464@mvgrce.edu.in">22331A4464 <br>@mvgrce.edu.in</a>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </li>
+              <li class="l-section section">
+                <div class="hire">
+                  <h2>You want us to do</h2>
+                 
+                  <form class="work-request">
+                    <div class="work-request--options">
+                      <span class="options-a">
+                        <input id="opt-1" type="checkbox" value="app design" />
+                        <label for="opt-1">
+                          <svg
+                            version="1.1"
+                            id="Layer_1"
+                            xmlns="http://www.w3.org/2000/svg"
+                            xmlns:xlink="http://www.w3.org/1999/xlink"
+                            x="0px"
+                            y="0px"
+                            viewBox="0 0 150 111"
+                            style="enable-background: new 0 0 150 111"
+                            xml:space="preserve"
+                          >
+                            <g
+                              transform="translate(0.000000,111.000000) scale(0.100000,-0.100000)"
+                            >
+                              <path
+                                d="M950,705L555,310L360,505C253,612,160,700,155,700c-6,0-44-34-85-75l-75-75l278-278L550-5l475,475c261,261,475,480,475,485c0,13-132,145-145,145C1349,1100,1167,922,950,705z"
+                              />
+                            </g>
+                          </svg>
+                          App Design
+                        </label>
+                        <input
+                          id="opt-2"
+                          type="checkbox"
+                          value="graphic design"
+                        />
+                        <label for="opt-2">
+                          <svg
+                            version="1.1"
+                            id="Layer_1"
+                            xmlns="http://www.w3.org/2000/svg"
+                            xmlns:xlink="http://www.w3.org/1999/xlink"
+                            x="0px"
+                            y="0px"
+                            viewBox="0 0 150 111"
+                            style="enable-background: new 0 0 150 111"
+                            xml:space="preserve"
+                          >
+                            <g
+                              transform="translate(0.000000,111.000000) scale(0.100000,-0.100000)"
+                            >
+                              <path
+                                d="M950,705L555,310L360,505C253,612,160,700,155,700c-6,0-44-34-85-75l-75-75l278-278L550-5l475,475c261,261,475,480,475,485c0,13-132,145-145,145C1349,1100,1167,922,950,705z"
+                              />
+                            </g>
+                          </svg>
+                          Graphic Design
+                        </label>
+                        <input
+                          id="opt-3"
+                          type="checkbox"
+                          value="motion design"
+                        />
+                        <label for="opt-3">
+                          <svg
+                            version="1.1"
+                            id="Layer_1"
+                            xmlns="http://www.w3.org/2000/svg"
+                            xmlns:xlink="http://www.w3.org/1999/xlink"
+                            x="0px"
+                            y="0px"
+                            viewBox="0 0 150 111"
+                            style="enable-background: new 0 0 150 111"
+                            xml:space="preserve"
+                          >
+                            <g
+                              transform="translate(0.000000,111.000000) scale(0.100000,-0.100000)"
+                            >
+                              <path
+                                d="M950,705L555,310L360,505C253,612,160,700,155,700c-6,0-44-34-85-75l-75-75l278-278L550-5l475,475c261,261,475,480,475,485c0,13-132,145-145,145C1349,1100,1167,922,950,705z"
+                              />
+                            </g>
+                          </svg>
+                          Motion Design
+                        </label>
+                      </span>
+                      <span class="options-b">
+                        <input id="opt-4" type="checkbox" value="ux design" />
+                        <label for="opt-4">
+                          <svg
+                            version="1.1"
+                            id="Layer_1"
+                            xmlns="http://www.w3.org/2000/svg"
+                            xmlns:xlink="http://www.w3.org/1999/xlink"
+                            x="0px"
+                            y="0px"
+                            viewBox="0 0 150 111"
+                            style="enable-background: new 0 0 150 111"
+                            xml:space="preserve"
+                          >
+                            <g
+                              transform="translate(0.000000,111.000000) scale(0.100000,-0.100000)"
+                            >
+                              <path
+                                d="M950,705L555,310L360,505C253,612,160,700,155,700c-6,0-44-34-85-75l-75-75l278-278L550-5l475,475c261,261,475,480,475,485c0,13-132,145-145,145C1349,1100,1167,922,950,705z"
+                              />
+                            </g>
+                          </svg>
+                          UX Design
+                        </label>
+                        <input id="opt-5" type="checkbox" value="webdesign" />
+                        <label for="opt-5">
+                          <svg
+                            version="1.1"
+                            id="Layer_1"
+                            xmlns="http://www.w3.org/2000/svg"
+                            xmlns:xlink="http://www.w3.org/1999/xlink"
+                            x="0px"
+                            y="0px"
+                            viewBox="0 0 150 111"
+                            style="enable-background: new 0 0 150 111"
+                            xml:space="preserve"
+                          >
+                            <g
+                              transform="translate(0.000000,111.000000) scale(0.100000,-0.100000)"
+                            >
+                              <path
+                                d="M950,705L555,310L360,505C253,612,160,700,155,700c-6,0-44-34-85-75l-75-75l278-278L550-5l475,475c261,261,475,480,475,485c0,13-132,145-145,145C1349,1100,1167,922,950,705z"
+                              />
+                            </g>
+                          </svg>
+                          Webdesign
+                        </label>
+                      </span>
+                    </div>
+                    <div class="work-request--information">
+                      <div class="information-name">
+                        <input id="name" type="text" spellcheck="false" />
+                        <label for="name">Name</label>
+                      </div>
+                      <div class="information-email">
+                        <input id="email" type="email" spellcheck="false" />
+                        <label for="email">Email</label>
+                      </div>
+                    </div>
+                    <input type="submit" value="Send Request" />
+                  </form>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <ul class="outer-nav">
+        <li class="is-active">Home</li>
+        <li>Phishing Link Detection</li>
+        <li>Malicious File Detection</li>
+        <li>Contact</li>
+        <li>About Us</li>
+      </ul>
+    </div>
+    
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='js/vendor/jquery-2.2.4.min.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/functions-min.js') }}"></script>
+  </body>
+</html>
