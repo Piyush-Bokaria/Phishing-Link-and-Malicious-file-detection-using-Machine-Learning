@@ -1445,69 +1445,127 @@
       s(),
       r();
   });
-
-  document.addEventListener('about--banner', function () {
-    const form = document.getElementById('malware-form');
-    if (form) {
-        form.addEventListener('submit', async function(event) {
-            event.preventDefault();
-
-            const fileInput = document.getElementById('file');
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-
-            const resultDiv = document.getElementById('result-box');
-            resultDiv.innerText = 'Predicting...';
-
-            try {
-                const response = await fetch('/predict_malware', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.prediction) {
-                    resultDiv.innerText = `Malware Prediction: ${data.prediction}`;
-                    alert(`Malware Prediction: ${data.prediction}`);
-                } else if (data.error) {
-                    alert(`Error: ${data.error}`);
-                    resultDiv.innerText = `Error: ${data.error}`;
-                } else {
-                  alert('Unexpected response from server.');
-                    resultDiv.innerText = 'Unexpected response from server.';
-                }
-            } catch (err) {
-              alert('Error predicting file: ' + err.message)
-                resultDiv.innerText = 'Error predicting file: ' + err.message;
+  document.addEventListener('DOMContentLoaded', function () {
+      const malwareForm = document.getElementById('malicious-form');
+      if (malwareForm) {
+        malwareForm.addEventListener('submit', async function (event) {
+          event.preventDefault();
+    
+          const fileInput = document.getElementById('malicious-file');
+          const formData = new FormData();
+          formData.append('file', fileInput.files[0]);  
+          const resultDiv = document.getElementById('result-box-malicious');
+          resultDiv.innerText = 'Predicting...';
+    
+          try {
+            const response = await fetch('/predict_malware', {
+              method: 'POST',
+              body: formData
+            });            
+    
+            const data = await response.json();
+    
+            if (data.filename && data.prediction) {
+              const msg = `File: ${data.filename}, Prediction: ${data.prediction} (Confidence: ${data.confidence})`;
+              resultDiv.innerText = msg;
+              alert(msg);
+            } else if (data.error) {
+              resultDiv.innerText = `Error: ${data.error}`;
+              alert(`Error: ${data.error}`);
+            } else {
+              resultDiv.innerText = 'Unexpected response from server.';
+              alert('Unexpected response from server.');
             }
+          } catch (err) {
+            resultDiv.innerText = 'Error predicting file: ' + err.message;
+            alert('Error predicting file: ' + err.message);
+          }
         });
-    }
-});
-  
-  document.getElementById('phishing-form').addEventListener('submit', function (e) {
-    e.preventDefault();
-    const url = document.getElementById('phishing-link').value;
-  
-    fetch('/predict_url', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: `url=${encodeURIComponent(url)}`
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.error) {
-        alert('Error: ' + data.error);
-        document.getElementById('result-box').innerText = 'Error: ' + data.error;
-      } else {
-        alert('URL Prediction: ' + data.prediction);
-        document.getElementById('result-box').innerText = 'URL Prediction: ' + data.prediction;
       }
-    })
-    .catch(err => {
-      alert('Error: ' + err);
+  
+  
+    const phishingForm = document.getElementById('phishing-form');
+    if (phishingForm) {
+      phishingForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const url = document.getElementById('phishing-link').value;
+  
+        fetch('/predict_url', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: `phishing-link=${encodeURIComponent(url)}`
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.error) {
+              document.getElementById('result-box-phish').innerText = 'Error: ' + data.error;
+              alert('Error: ' + data.error);
+            } else {
+              const msg = `Link: ${data.url.substring(0, 10)}... URL Prediction: ${data.prediction}
+              (Confidence: ${data.confidence})`;
+              document.getElementById('result-box-phish').innerText = msg;
+              alert(`URL Prediction: ${data.prediction} (Confidence: ${data.confidence})`);
+            }
+            document.getElementById("phishing-link").value = "";
+          })
+          .catch(err => {
+            alert('Error: ' + err);
+          });
+      });
+    }
+  });
+
+  document.querySelectorAll('.zoomable').forEach((element) => {
+    element.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Remove existing zoom if already active
+      const existingZoom = document.querySelector('.image-zoom-overlay');
+      if (existingZoom) {
+        existingZoom.remove();
+        return;
+      }
+
+      // Ensure we get the .zoomable even if a child is clicked
+      const zoomableEl = e.currentTarget;
+
+      const overlay = document.createElement('div');
+      overlay.className = 'image-zoom-overlay';
+
+      const zoomedImg = document.createElement('img');
+      zoomedImg.className = 'zoomed-img';
+
+      if (zoomableEl.tagName === 'IMG') {
+        zoomedImg.src = zoomableEl.src;
+      } else {
+        const bg = window.getComputedStyle(zoomableEl).backgroundImage;
+        const match = bg.match(/url\(["']?(.+?)["']?\)/);
+        if (match && match[1]) {
+          zoomedImg.src = match[1];
+        } else {
+          console.error('No valid background image found.');
+          return;
+        }
+      }
+
+      const closeBtn = document.createElement('button');
+      closeBtn.textContent = '×';
+      closeBtn.className = 'close-btn';
+      closeBtn.addEventListener('click', () => overlay.remove());
+
+      overlay.appendChild(zoomedImg);
+      overlay.appendChild(closeBtn);
+      document.body.appendChild(overlay);
+
+      const escHandler = function (e) {
+        if (e.key === 'Escape') {
+          overlay.remove();
+          document.removeEventListener('keydown', escHandler);
+        }
+      };
+      document.addEventListener('keydown', escHandler);
     });
   });
-  

@@ -1,275 +1,224 @@
-import os
 import pickle
-import joblib
+import pandas as pd
 import numpy as np
-from flask import Flask, request, render_template, redirect, flash ,jsonify, abort, url_for
+from flask import Flask, request, render_template, jsonify, redirect, url_for
 import urllib.parse
 import re
 from werkzeug.utils import secure_filename
 import pefile
-import array
 import math
-import sys
-import argparse
-import shutil, time
-import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
+import os
+import atexit
+import shutil
+import threading
+import time
+
 
 app = Flask(__name__)
 app.secret_key = "secret123"
 UPLOAD_FOLDER = './uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 
-malware_model = joblib.load("./Models/malware_detection.pkl")
-with open("./Models/XGBoostClassifier.pickle.dat", "rb") as f:
+# Load model
+with open("./Models/rf-and-gdb.pkl", "rb") as f:
     phishing_model = pickle.load(f)
-FEATURES = ['e_magic', 'e_cblp', 'e_cp', 'e_crlc', 'e_cparhdr', 'e_minalloc',
-    'e_maxalloc', 'e_ss', 'e_sp', 'e_csum', 'e_ip', 'e_cs', 'e_lfarlc',
-    'e_ovno', 'e_oemid', 'e_oeminfo', 'e_lfanew', 'NumberOfSections',
-    'PointerToSymbolTable', 'NumberOfSymbols', 'SizeOfOptionalHeader',
-    'Characteristics', 'Magic', 'MajorLinkerVersion', 'MinorLinkerVersion',
-    'SizeOfCode', 'SizeOfInitializedData', 'SizeOfUninitializedData',
-    'AddressOfEntryPoint', 'BaseOfCode', 'ImageBase', 'SectionAlignment',
-    'FileAlignment', 'MajorOperatingSystemVersion', 'MinorOperatingSystemVersion',
-    'MajorImageVersion', 'MinorImageVersion', 'MajorSubsystemVersion',
-    'MinorSubsystemVersion', 'SizeOfHeaders', 'CheckSum', 'SizeOfImage',
-    'Subsystem', 'DllCharacteristics', 'SizeOfStackReserve', 'SizeOfStackCommit',
-    'SizeOfHeapReserve', 'SizeOfHeapCommit', 'LoaderFlags', 'NumberOfRvaAndSizes',
-    'SuspiciousImportFunctions', 'SuspiciousNameSection', 'SectionsLength',
-    'SectionMinEntropy', 'SectionMaxEntropy', 'SectionMinRawsize', 'SectionMaxRawsize',
-    'SectionMinVirtualsize', 'SectionMaxVirtualsize', 'SectionMaxPhysical',
-    'SectionMinPhysical', 'SectionMaxVirtual', 'SectionMinVirtual',
-    'SectionMaxPointerData', 'SectionMinPointerData', 'SectionMaxChar',
-    'SectionMainChar', 'DirectoryEntryImport', 'DirectoryEntryImportSize',
-    'DirectoryEntryExport', 'ImageDirectoryEntryExport', 'ImageDirectoryEntryImport',
-    'ImageDirectoryEntryResource', 'ImageDirectoryEntryException', 'ImageDirectoryEntrySecurity']
 
+with open("./Models/malware_detection.pkl", "rb") as f:
+    model = pickle.load(f)
 
-def extract_features(filepath):
-    features = {}
-    try:
-        pe = pefile.PE(filepath)
-    except pefile.PEFormatError:
-        raise ValueError("Invalid PE file.")
+shortening_services = r"(bit\.ly|goo\.gl|shorte\.st|go2l\.ink|x\.co|ow\.ly|tinyurl|tr\.im|is\.gd|cli\.gs|yfrog\.com|migre\.me|ff\.im|tiny\.cc|url4\.eu|twit\.ac|su\.pr|twurl\.nl|snipurl\.com|short\.to|BudURL\.com|ping\.fm|post\.ly|Just\.as|bkite\.com|snipr\.com|fic\.kr|loopt\.us|doiop\.com|short\.ie|kl\.am|wp\.me|rubyurl\.com|om\.ly|to\.ly|bit\.do|t\.co|lnkd\.in|db\.tt|qr\.ae|adf\.ly|bitly\.com|cur\.lv|ity\.im|q\.gs|po\.st|bc\.vc|twitthis\.com|u\.to|j\.mp|buzurl\.com|cutt\.us|u\.bb|yourls\.org|prettylinkpro\.com|scrnch\.me|filoops\.info|vzturl\.com|qr\.net|1url\.com|tweez\.me|v\.gd|tr\.im|link\.zip\.net)"
+required_features = ['Characteristics',
+                     'SizeOfStackReserve',
+                     'SectionMinEntropy',
+                     'DllCharacteristics',
+                     'SizeOfHeaders']
 
+# Function to extract features
+def extract_features(url):
+    parsed = urllib.parse.urlparse(url)
+    hostname = parsed.hostname or ""
+    path = parsed.path or ""
 
-    for attr in ['e_magic', 'e_cblp', 'e_cp', 'e_crlc', 'e_cparhdr', 'e_minalloc',
-                 'e_maxalloc', 'e_ss', 'e_sp', 'e_csum', 'e_ip', 'e_cs', 'e_lfarlc',
-                 'e_ovno', 'e_oemid', 'e_oeminfo', 'e_lfanew']:
-        features[attr] = getattr(pe.DOS_HEADER, attr)
+    def count_char(string, char):
+        return string.count(char)
 
-    features['NumberOfSections'] = pe.FILE_HEADER.NumberOfSections
-    features['PointerToSymbolTable'] = pe.FILE_HEADER.PointerToSymbolTable
-    features['NumberOfSymbols'] = pe.FILE_HEADER.NumberOfSymbols
-    features['SizeOfOptionalHeader'] = pe.FILE_HEADER.SizeOfOptionalHeader
-    features['Characteristics'] = pe.FILE_HEADER.Characteristics
+    def digit_ratio(s):
+        return sum(c.isdigit() for c in s) / len(s) if s else 0
 
-    for attr in ['Magic', 'MajorLinkerVersion', 'MinorLinkerVersion',
-                 'SizeOfCode', 'SizeOfInitializedData', 'SizeOfUninitializedData',
-                 'AddressOfEntryPoint', 'BaseOfCode', 'ImageBase', 'SectionAlignment',
-                 'FileAlignment', 'MajorOperatingSystemVersion', 'MinorOperatingSystemVersion',
-                 'MajorImageVersion', 'MinorImageVersion', 'MajorSubsystemVersion',
-                 'MinorSubsystemVersion', 'SizeOfHeaders', 'CheckSum', 'SizeOfImage',
-                 'Subsystem', 'DllCharacteristics', 'SizeOfStackReserve', 'SizeOfStackCommit',
-                 'SizeOfHeapReserve', 'SizeOfHeapCommit', 'LoaderFlags', 'NumberOfRvaAndSizes']:
-        features[attr] = getattr(pe.OPTIONAL_HEADER, attr)
-
-    suspicious_keywords = ['LoadLibrary', 'GetProcAddress', 'VirtualAlloc', 'WriteProcessMemory']
-    suspicious_count = 0
-    try:
-        for entry in pe.DIRECTORY_ENTRY_IMPORT:
-            for imp in entry.imports:
-                if imp.name and any(kw in imp.name.decode(errors="ignore") for kw in suspicious_keywords):
-                    suspicious_count += 1
-    except AttributeError:
-        pass
-    features['SuspiciousImportFunctions'] = suspicious_count
-
-    sections = pe.sections
-    features['SuspiciousNameSection'] = sum(1 for s in sections if b'.text' not in s.Name)
-    features['SectionsLength'] = len(sections)
-    entropies = [s.get_entropy() for s in sections]
-    features['SectionMinEntropy'] = min(entropies) if entropies else 0
-    features['SectionMaxEntropy'] = max(entropies) if entropies else 0
-    raws = [s.SizeOfRawData for s in sections]
-    features['SectionMinRawsize'] = min(raws) if raws else 0
-    features['SectionMaxRawsize'] = max(raws) if raws else 0
-    virtuals = [s.Misc_VirtualSize for s in sections]
-    features['SectionMinVirtualsize'] = min(virtuals) if virtuals else 0
-    features['SectionMaxVirtualsize'] = max(virtuals) if virtuals else 0
-    physicals = [s.PointerToRawData for s in sections]
-    features['SectionMinPhysical'] = min(physicals) if physicals else 0
-    features['SectionMaxPhysical'] = max(physicals) if physicals else 0
-    virtuals_addr = [s.VirtualAddress for s in sections]
-    features['SectionMinVirtual'] = min(virtuals_addr) if virtuals_addr else 0
-    features['SectionMaxVirtual'] = max(virtuals_addr) if virtuals_addr else 0
-    ptr_data = [s.PointerToRelocations for s in sections]
-    features['SectionMinPointerData'] = min(ptr_data) if ptr_data else 0
-    features['SectionMaxPointerData'] = max(ptr_data) if ptr_data else 0
-    chrs = [s.Characteristics for s in sections]
-    features['SectionMinChar'] = min(chrs) if chrs else 0
-    features['SectionMaxChar'] = max(chrs) if chrs else 0
-    features['SectionMainChar'] = max(set(chrs), key=chrs.count) if chrs else 0
-
-    directory_entries = {
-    'ImageDirectoryEntryExport': pefile.IMAGE_DIRECTORY_ENTRY_EXPORT,
-    'ImageDirectoryEntryImport': pefile.IMAGE_DIRECTORY_ENTRY_IMPORT,
-    'ImageDirectoryEntryResource': pefile.IMAGE_DIRECTORY_ENTRY_RESOURCE,
-    'ImageDirectoryEntryException': pefile.IMAGE_DIRECTORY_ENTRY_EXCEPTION,
-    'ImageDirectoryEntrySecurity': pefile.IMAGE_DIRECTORY_ENTRY_SECURITY
+    features = {
+        'length_url': len(url),
+        'length_hostname': len(hostname),
+        'ip': 1 if re.fullmatch(r'(\d{1,3}\.){3}\d{1,3}', hostname) else 0,
+        'nb_dots': count_char(url, '.'),
+        'nb_hyphens': count_char(url, '-'),
+        'nb_at': count_char(url, '@'),
+        'nb_qm': count_char(url, '?'),
+        'nb_and': count_char(url, '&'),
+        'nb_or': count_char(url, '|'),
+        'nb_eq': count_char(url, '='),
+        'nb_underscore': count_char(url, '_'),
+        'nb_tilde': count_char(url, '~'),
+        'nb_percent': count_char(url, '%'),
+        'nb_slash': count_char(url, '/'),
+        'nb_star': count_char(url, '*'),
+        'nb_colon': count_char(url, ':'),
+        'nb_comma': count_char(url, ','),
+        'nb_semicolumn': count_char(url, ';'),
+        'nb_dollar': count_char(url, '$'),
+        'nb_space': count_char(url, ' '),
+        'nb_www': 1 if 'www' in url else 0,
+        'nb_com': url.count('.com'),
+        'nb_dslash': url.count('//'),
+        'http_in_path': 1 if 'http' in path.lower() else 0,
+        'https_token': 1 if 'https' in hostname else 0,
+        'ratio_digits_url': digit_ratio(url),
+        'ratio_digits_host': digit_ratio(hostname),
+        'punycode': 1 if 'xn--' in url else 0,
+        'shortening_service': 1 if re.search(shortening_services, url) else 0,
+        'path_extension': 1 if re.search(r'\.(exe|zip|scr|rar|tar|gz|apk|msi|bat|dll)$', path.lower()) else 0,
+        'phish_hints': 1 if re.search(r'(secure|account|webscr|login|signin|banking|update|confirm|security)', url.lower()) else 0,
+        'domain_in_brand': 0, 
+        'brand_in_subdomain': 0, 
+        'brand_in_path': 0, 
+        'suspecious_tld': 1 if re.search(r'\.(zip|review|country|kim|cricket|science|work|party|gq|link)$', hostname.lower()) else 0
     }
 
-    for key, idx in directory_entries.items():
+    return pd.DataFrame([features])
+
+# Compute entropy
+def get_entropy(data):
+    if not data:
+        return 0.0
+    entropy = 0
+    for x in range(256):
+        p_x = data.count(x) / len(data)
+        if p_x > 0:
+            entropy -= p_x * math.log2(p_x)
+    return entropy
+
+def delayed_delete(path, delay=3):
+    def _delete():
+        time.sleep(delay)
         try:
-            directory = pe.OPTIONAL_HEADER.DATA_DIRECTORY[idx]
-            features[key] = 1 if directory.VirtualAddress > 0 else 0
-        except Exception:
-            features[key] = 0
+            os.remove(path)
+        except Exception as e:
+            print(f"Delayed delete failed: {e}")
+    threading.Thread(target=_delete).start()
 
+# Extract PE features
+def extract_pe_features(filepath):
     try:
-        features['DirectoryEntryImport'] = len(pe.DIRECTORY_ENTRY_IMPORT)
-        features['DirectoryEntryImportSize'] = sum([entry.struct.Size for entry in pe.DIRECTORY_ENTRY_IMPORT])
-    except AttributeError:
-        features['DirectoryEntryImport'] = 0
-        features['DirectoryEntryImportSize'] = 0
+        pe = pefile.PE(filepath, fast_load=True)
+        pe.parse_data_directories()  
+        characteristics = pe.FILE_HEADER.Characteristics
+        size_of_stack_reserve = pe.OPTIONAL_HEADER.SizeOfStackReserve
 
-    try:
-        features['DirectoryEntryExport'] = len(pe.DIRECTORY_ENTRY_EXPORT.symbols)
-    except AttributeError:
-        features['DirectoryEntryExport'] = 0
+        min_entropy = float('inf')
+        for section in pe.sections:
+            entropy = get_entropy(section.get_data())
+            min_entropy = min(min_entropy, entropy)
 
-    return [features.get(f, 0) for f in FEATURES]
+        dll_characteristics = pe.OPTIONAL_HEADER.DllCharacteristics
+        size_of_headers = pe.OPTIONAL_HEADER.SizeOfHeaders
+        
+        pe.close()  # 🔥 THIS is the key line
 
-def extract_url_features(url):
-    features = []
+        return {
+            'Characteristics': characteristics,
+            'SizeOfStackReserve': size_of_stack_reserve,
+            'SectionMinEntropy': min_entropy,
+            'DllCharacteristics': dll_characteristics,
+            'SizeOfHeaders': size_of_headers
+        }
 
-    # Feature 1: Presence of IP address in URL
-    features.append(1 if re.search(r'\d+\.\d+\.\d+\.\d+', url) else 0)
+    except Exception as e:
+        print(f"Error while parsing PE file: {e}")
+        return None
 
-    # Feature 2: Presence of '@' symbol
-    features.append(1 if "@" in url else 0)
 
-    # Feature 3: URL Length
-    features.append(len(url))
+@app.route("/predict_url", methods=['POST'])
+def predict_url():
+    url = request.form.get("phishing-link")
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
 
-    # Feature 4: URL Depth (number of '/' in path)
-    parsed_url = urllib.parse.urlparse(url)
-    features.append(parsed_url.path.count('/'))
+    features = extract_features(url)
+    prediction_prob = phishing_model.predict_proba(features)[0][1]
+    prediction_class = phishing_model.predict(features)[0]
 
-    # Feature 5: Redirection ("//" appears in the URL path)
-    features.append(1 if "//" in parsed_url.path else 0)
+    result = {
+        "url": url,
+        "prediction": "Phishing" if prediction_class == 1 else "Legitimate",
+        "confidence": round(prediction_prob, 4) if prediction_class == 1 else round(1 - prediction_prob, 4)
+    }
+    return jsonify(result)
 
-    # Feature 6: Presence of "https" in domain name
-    features.append(1 if "https" in parsed_url.netloc else 0)
 
-    # Feature 7: Presence of TinyURL
-    features.append(1 if "tinyurl" in url else 0)
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    uploaded_file = request.files['file']
+    if uploaded_file.filename != '':
+        filename = secure_filename(uploaded_file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        uploaded_file.save(file_path)
+    return redirect(url_for('home'))
 
-    # Feature 8: Presence of prefix or suffix in domain (e.g., 'paypal-secure.com')
-    features.append(1 if '-' in parsed_url.netloc else 0)
+@app.before_request
+def setup_upload_folder():
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
 
-    # Feature 9: DNS Record (For now, assume domain exists)
-    features.append(1)  # You can replace with actual DNS lookup
+@atexit.register
+def cleanup_upload_folder():
+    shutil.rmtree(UPLOAD_FOLDER, ignore_errors=True)
 
-    # Feature 10: Web Traffic (Assume 1 for now, replace with actual traffic check)
-    features.append(1)  
+@app.route("/predict_malware", methods=['GET', 'POST'])
+def predict_malware():
+    if request.method == 'POST':
+        file = request.files.get('file')  
+        if not file:
+            return jsonify({'error': 'No file uploaded'}), 400
 
-    # Feature 11: Domain Age (Assume 1 for now, replace with actual WHOIS check)
-    features.append(1)  
+        upload_folder = 'uploads'
+        os.makedirs(upload_folder, exist_ok=True)  # Ensure uploads folder exists
 
-    # Feature 12: Domain End Period (Assume 1 for now, replace with actual WHOIS check)
-    features.append(1)  
+        filename = secure_filename(file.filename)  # This is VERY important
+        
+        file_path = os.path.join(upload_folder, filename)
+        file.save(file_path)
+    
 
-    # Feature 13: Presence of iFrame (Assume 0 for now, replace with actual webpage analysis)
-    features.append(0)
+        if not filename.lower().endswith('.exe'):
+            return jsonify({"error": "Only .exe files are supported"}), 400
 
-    # Feature 14: Mouse Over Effect (Assume 0 for now, replace with actual JavaScript analysis)
-    features.append(0)
+        try:
+            features_dict = extract_pe_features(file_path)
+            if not features_dict:
+                return jsonify({'error': 'Could not extract features. Please upload a valid PE (.exe) file.'}), 400
 
-    # Feature 15: Right Click Disabled (Assume 0 for now, replace with actual webpage analysis)
-    features.append(0)
+            df = pd.DataFrame([features_dict])[required_features]
+            prediction_prob = model.predict_proba(df)[0][1]
+            prediction_class = model.predict(df)[0]
 
-    # Feature 16: Web Forwards (Assume 0 for now, replace with actual checks)
-    features.append(0)
-
-    return np.array(features).reshape(1, -1) 
+            result = {
+                "filename": filename,
+                "prediction": "Malicious" if prediction_class == 1 else "Legitimate",
+                "confidence": round(prediction_prob, 4) if prediction_class == 1 else round(1 - prediction_prob, 4)
+            }
+            
+            delayed_delete(file_path)
+            
+            return jsonify(result)
+        except Exception as e:
+            # Handle any unexpected errors
+            return jsonify({'error': str(e)}), 500
+    else:
+        return render_template('index.html')
 
 @app.route('/')
 def home():
     return render_template('index.html')
-
-@app.route('/predict_malware', methods=['POST'])
-def upload_file():
-    try:
-        if 'malicious' not in request.files:
-            return jsonify({'error': 'No file part'}), 400
-        
-        file = request.files['malicious']
-        if file.filename == '':
-            return jsonify({'error': 'No selected file'}), 400
-        
-        filepath = os.path.normpath(os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename)))
-
-        file.save(filepath)
-
-        # Extract features using your function
-        features = extract_features(filepath)
-
-        # List of model-required features (replace with your full updated list)
-        feature_list = [
-            'e_magic', 'e_cblp', 'e_cp', 'e_crlc', 'e_cparhdr', 'e_minalloc',
-            'e_maxalloc', 'e_ss', 'e_sp', 'e_csum', 'e_ip', 'e_cs', 'e_lfarlc',
-            'e_ovno', 'e_oemid', 'e_oeminfo', 'e_lfanew', 'NumberOfSections',
-            'PointerToSymbolTable', 'NumberOfSymbols', 'SizeOfOptionalHeader',
-            'Characteristics', 'Magic', 'MajorLinkerVersion', 'MinorLinkerVersion',
-            'SizeOfCode', 'SizeOfInitializedData', 'SizeOfUninitializedData',
-            'AddressOfEntryPoint', 'BaseOfCode', 'ImageBase', 'SectionAlignment',
-            'FileAlignment', 'MajorOperatingSystemVersion',
-            'MinorOperatingSystemVersion', 'MajorImageVersion', 'MinorImageVersion',
-            'MajorSubsystemVersion', 'MinorSubsystemVersion', 'SizeOfHeaders',
-            'CheckSum', 'SizeOfImage', 'Subsystem', 'DllCharacteristics',
-            'SizeOfStackReserve', 'SizeOfStackCommit', 'SizeOfHeapReserve',
-            'SizeOfHeapCommit', 'LoaderFlags', 'NumberOfRvaAndSizes',
-            'SuspiciousImportFunctions', 'SuspiciousNameSection', 'SectionsLength',
-            'SectionMinEntropy', 'SectionMaxEntropy', 'SectionMinRawsize',
-            'SectionMaxRawsize', 'SectionMinVirtualsize', 'SectionMaxVirtualsize',
-            'SectionMaxPhysical', 'SectionMinPhysical', 'SectionMaxVirtual',
-            'SectionMinVirtual', 'SectionMaxPointerData', 'SectionMinPointerData',
-            'SectionMaxChar', 'SectionMainChar', 'DirectoryEntryImport',
-            'DirectoryEntryImportSize', 'DirectoryEntryExport',
-            'ImageDirectoryEntryExport', 'ImageDirectoryEntryImport',
-            'ImageDirectoryEntryResource', 'ImageDirectoryEntryException',
-            'ImageDirectoryEntrySecurity'
-        ]
-
-        input_features = [features.get(k, 0) for k in feature_list]
-
-        # Predict
-        prediction = malware_model.predict([input_features])[0]
-        print(prediction)
-        label = 'malicious' if prediction == 1 else 'legitimate'
-
-        return jsonify({'prediction': label})
-    
-    except Exception as e:
-        print("Error during malware prediction:", e)
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/predict_url', methods=['GET', 'POST'])
-def predict_url():
-    url = request.form.get("url")
-    if not url:
-        return jsonify({"error": "No URL provided"}), 400
-
-    features = extract_url_features(url)
-    prediction = phishing_model.predict(features)[0]
-    print(prediction)
-    label = 'Phishing Link' if prediction == 1 else 'Legitimate'
-
-    return jsonify({
-        "url": url,
-        "prediction": label
-    })
 
 if __name__ == '__main__':
     app.run(debug=True)
