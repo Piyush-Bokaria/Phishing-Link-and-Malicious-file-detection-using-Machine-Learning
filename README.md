@@ -68,3 +68,51 @@ this is the folder structure:
 ├───app.py
 └───requirements.txt
 ```
+
+
+# 🛠️ Installation & Setup
+## 🔁 Clone the repository
+
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name
+
+## 📦 Create a virtual environment (recommended)
+
+## Create a virtual environment
+``` python -m venv venv ```
+
+## Activate the virtual environment
+### On Windows
+```venv\Scripts\activate```
+
+### On macOS/Linux
+```source venv/bin/activate```
+
+## 📥 Install dependencies
+
+```
+pip install -r requirements.txt
+```
+
+## ▶️ Run the Application
+```
+python app.py
+```
+
+Once running, open your browser and go to:
+
+```http://127.0.0.1:5000/```
+
+📌 Notes:
+
+1. Only .exe files are accepted for malware detection.
+
+2. Ensure that the uploaded .exe files are not locked by another process before submission.
+
+3. A maximum file size of 200 MB is enforced.
+
+4. URL detection supports typical phishing pattern identification based on feature extraction.
+
+🤝 Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
