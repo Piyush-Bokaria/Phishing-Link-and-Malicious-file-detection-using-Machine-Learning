@@ -38,31 +38,33 @@ Model files:
 ## 📂 Folder Structure
 this is the folder structure:
 
+```
 ├───Models
 │   ├───malware_detection.pkl 
 │   └───rf-and-gdb.pkl
 ├───model_training
 │   ├───Malicious_file
-│       ├───dataset_malwares.csv
-│       └───malware_model.ipynb
+│   │   ├───dataset_malwares.csv
+│   │   └───malware_model.ipynb
 │   └───Phishing_Link
 │       ├───dataset_phishing.csv
 │       └───Phishing Website Detection_Models & Training.ipynb
 ├───outputs
 ├───static
 │   ├───css
-│       ├───main.css
-│       ├───main.sass
-│       ├───base
-│       ├───fonts
-│       ├───layouts
-│       └───modules
+│   │   ├───main.css
+│   │   ├───main.sass
+│   │   ├───base
+│   │   ├───fonts
+│   │   ├───layouts
+│   │   └───modules
 │   ├───images
 │   ├───img
 │   └───js
 │       ├───functions-min.js
 │       └───functions.js
-└───templates
-│   ├───index.html
-└───app.py
+├───templates
+│   └───index.html
+├───app.py
 └───requirements.txt
+```
