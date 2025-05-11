@@ -122,7 +122,7 @@ def extract_pe_features(filepath):
         dll_characteristics = pe.OPTIONAL_HEADER.DllCharacteristics
         size_of_headers = pe.OPTIONAL_HEADER.SizeOfHeaders
         
-        pe.close()  # 🔥 THIS is the key line
+        pe.close()  
 
         return {
             'Characteristics': characteristics,
@@ -153,16 +153,6 @@ def predict_url():
         "confidence": round(prediction_prob, 4) if prediction_class == 1 else round(1 - prediction_prob, 4)
     }
     return jsonify(result)
-
-
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    uploaded_file = request.files['file']
-    if uploaded_file.filename != '':
-        filename = secure_filename(uploaded_file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        uploaded_file.save(file_path)
-    return redirect(url_for('home'))
 
 @app.before_request
 def setup_upload_folder():
@@ -211,7 +201,6 @@ def predict_malware():
             
             return jsonify(result)
         except Exception as e:
-            # Handle any unexpected errors
             return jsonify({'error': str(e)}), 500
     else:
         return render_template('index.html')
